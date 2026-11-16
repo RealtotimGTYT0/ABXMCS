@@ -35,7 +35,7 @@ async function issueCode(tx: Tx, userId: string, purpose: LinkPurpose, now: Date
 
 export interface RegisterResult {
   user: SafeUser;
-  /** Shown to the player once. They type `/rconfirmT <code>` in-game to prove they own the username. */
+  /** Shown to the player once. They type `/rconfirmt <code>` in-game to prove they own the username. */
   linkCode: string;
   linkCodeExpiresAt: Date;
   session: CreatedSession;
@@ -170,7 +170,7 @@ export async function changePassword(
 //
 // No email exists, so ownership is proven in-game:
 //  1. The browser asks for a reset and is shown a code.
-//  2. Only the real player can type `/rconfirmT <code>` as the account's own Minecraft UUID.
+//  2. Only the real player can type `/rconfirmt <code>` as the account's own Minecraft UUID.
 //  3. Once confirmed, the browser (the only party that knows the code) sets a new password.
 // Requesting a reset for someone else's username gets an attacker a code they can never confirm.
 
@@ -198,7 +198,7 @@ export async function requestPasswordReset(
 
 export type ResetStatus = "WAITING_FOR_GAME" | "CONFIRMED" | "INVALID";
 
-/** The browser polls this while the player runs /rconfirmT in-game. */
+/** The browser polls this while the player runs /rconfirmt in-game. */
 export async function getResetStatus(db: Db, rawCode: string, now: Date = new Date()): Promise<ResetStatus> {
   let hash: string;
   try { hash = hashLinkCode(rawCode); } catch { return "INVALID"; }

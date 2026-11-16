@@ -18,6 +18,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
           <nav className="mx-auto flex max-w-4xl items-center gap-4 px-4 py-3 text-sm">
             <Link href="/" className="font-bold text-zinc-100">TokenStore</Link>
             <Link href="/shop">Shop</Link>
+            <Link href="/vote">Vote</Link>
             <span className="flex-1" />
             {auth ? (
               <>

@@ -49,6 +49,7 @@ enum TxType {
   ADMIN_GIVE
   ADMIN_TAKE
   ADMIN_SET
+  VOTE
 
   @@map("tx_type")
 }
@@ -141,6 +142,7 @@ model MinecraftAccount {
   purchases       Purchase[]
   rewards         RewardQueue[]
   playtimeRecords PlaytimeRecord[]
+  voteRecords     VoteRecord[]
 
   @@index([username])
   @@map("minecraft_accounts")
@@ -167,7 +169,7 @@ model Session {
   @@map("sessions")
 }
 
-// One-time codes typed in-game as `/rconfirmT <code>`: account linking and password reset.
+// One-time codes typed in-game as `/rconfirmt <code>`: account linking and password reset.
 model LinkCode {
   id         String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   userId     String      @map("user_id") @db.Uuid
@@ -408,4 +410,33 @@ model RateLimitBucket {
   @@id([key, windowStart])
   @@index([windowStart])
   @@map("rate_limit_buckets")
+}
+
+// Server-list voting. The sites a player can vote on (shown by /vote in-game and on the website).
+model VoteSite {
+  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  // Must match the service name the list site reports through Votifier (e.g. "minecraftservers.org").
+  serviceName String   @unique @map("service_name") @db.VarChar(64)
+  url         String   @db.VarChar(500)
+  enabled     Boolean  @default(true)
+  sortOrder   Int      @default(0) @map("sort_order")
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  @@map("vote_sites")
+}
+
+// One row per vote received. tokensAwarded = 0 when the same player voted on the same site inside the cooldown.
+model VoteRecord {
+  id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  mcAccountId    String   @map("mc_account_id") @db.Uuid
+  serviceName    String   @map("service_name") @db.VarChar(64)
+  // Unique: the same vote delivered twice (Votifier resends, plugin retries) is only ever processed once.
+  idempotencyKey String   @unique @map("idempotency_key") @db.VarChar(128)
+  tokensAwarded  Int      @map("tokens_awarded")
+  createdAt      DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+
+  account MinecraftAccount @relation(fields: [mcAccountId], references: [id], onDelete: Cascade)
+
+  @@index([mcAccountId, serviceName, createdAt(sort: Desc)])
+  @@map("vote_records")
 }

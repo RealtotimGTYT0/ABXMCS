@@ -2,7 +2,8 @@ import { notFound, redirect } from "next/navigation";
 import { getPrisma } from "../../lib/db.ts";
 import { csrfToken, currentAuth } from "../../web/session.ts";
 import { getEarningConfig } from "../../services/settings.ts";
-import { adminAdjustAction, adminRateAction } from "../actions.ts";
+import { adminAdjustAction, adminRateAction, adminVoteAction } from "../actions.ts";
+import { getVoteConfig, listVoteSites } from "../../services/votes.ts";
 import { Notice } from "../Notice.tsx";
 
 export default async function Admin({ searchParams }: { searchParams: Promise<{ e?: string; ok?: string }> }) {
@@ -12,11 +13,13 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
   const { e, ok } = await searchParams;
   const db = getPrisma();
   const csrf = await csrfToken();
-  const [cfg, purchases, review, servers] = await Promise.all([
+  const [cfg, purchases, review, servers, voteCfg, voteSites] = await Promise.all([
     getEarningConfig(db),
     db.purchase.findMany({ orderBy: { createdAt: "desc" }, take: 15, include: { account: { select: { username: true } } } }),
     db.rewardQueue.findMany({ where: { status: { in: ["NEEDS_REVIEW", "FAILED"] } }, orderBy: { updatedAt: "desc" }, take: 20, include: { purchase: { select: { productName: true } }, account: { select: { username: true } } } }),
     db.serverInstance.findMany({ orderBy: { lastSeenAt: "desc" }, take: 5 }),
+    getVoteConfig(db),
+    listVoteSites(db),
   ]);
   const hidden = <input type="hidden" name="_csrf" value={csrf} />;
   return (
@@ -28,6 +31,17 @@ export default async function Admin({ searchParams }: { searchParams: Promise<{ 
       <section className="card"><h2 className="mb-2 font-semibold">Earning rate</h2>
         <p className="mb-3 text-sm text-zinc-400">Currently 1 token per {Math.round(cfg.secondsPerToken / 60)} minutes (source: {cfg.source}).</p>
         <form action={adminRateAction} className="flex gap-2">{hidden}<input name="minutes" type="number" min="1" step="1" defaultValue={Math.round(cfg.secondsPerToken / 60)} className="input max-w-32" /><button className="btn">Save</button></form></section>
+      <section className="card"><h2 className="mb-2 font-semibold">Voting</h2>
+        <form action={adminVoteAction} className="space-y-3">{hidden}
+          <div className="flex flex-wrap gap-3">
+            <div><label className="label" htmlFor="tokens">Tokens per vote (0 = off)</label><input id="tokens" name="tokens" type="number" min="0" max="1000" defaultValue={voteCfg.tokens} className="input w-40" /></div>
+            <div><label className="label" htmlFor="cooldownHours">Hours between rewards per site</label><input id="cooldownHours" name="cooldownHours" type="number" min="1" max="168" defaultValue={voteCfg.cooldownHours} className="input w-40" /></div>
+          </div>
+          <div><label className="label" htmlFor="sites">Vote sites: one per line, <code>name | https://link</code></label>
+            <textarea id="sites" name="sites" rows={4} className="input font-mono" defaultValue={voteSites.map((v) => `${v.serviceName} | ${v.url}`).join("\n")} /></div>
+          <button className="btn">Save voting</button>
+        </form>
+        <p className="mt-2 text-xs text-zinc-500">The name must match the service name the list site sends through Votifier (it is shown in the Votifier console message when a vote arrives).</p></section>
       <section className="card"><h2 className="mb-2 font-semibold">Adjust a player&apos;s tokens</h2>
         <form action={adminAdjustAction} className="flex flex-wrap gap-2">{hidden}
           <input name="username" placeholder="Minecraft name" className="input max-w-48" required />

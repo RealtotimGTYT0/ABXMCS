@@ -12,6 +12,7 @@ import { requireAdmin, requireLinked } from "../services/authz.ts";
 import { revokeSession } from "../services/sessions.ts";
 import { setEarningFromAdmin, validateRate } from "../services/settings.ts";
 import { findAccountByUsername } from "../services/queries.ts";
+import { parseVoteSites, replaceVoteSites, setVoteConfig } from "../services/votes.ts";
 import { clearSessionCookies, clientContext, FLASH_COOKIE, guard, safeMessage, setSessionCookies } from "../web/session.ts";
 
 const fail = (to: string, e: unknown): never => redirect(`${to}?e=${encodeURIComponent(safeMessage(e))}`);
@@ -106,6 +107,19 @@ export async function adminRateAction(form: FormData) {
     validateRate(seconds);
     await setEarningFromAdmin(getPrisma(), { secondsPerToken: seconds, source: "admin" });
     message = `Earning rate set: 1 token per ${minutes} minutes`;
+  } catch (e) { return fail("/admin", e); }
+  redirect(`/admin?ok=${encodeURIComponent(message)}`);
+}
+
+export async function adminVoteAction(form: FormData) {
+  let message = "";
+  try {
+    requireAdmin(await guard(form));
+    const db = getPrisma();
+    const sites = parseVoteSites(str(form, "sites"));
+    await setVoteConfig(db, { tokens: Number(str(form, "tokens")), cooldownHours: Number(str(form, "cooldownHours")) });
+    await replaceVoteSites(db, sites);
+    message = `Voting saved: ${sites.length} site(s)`;
   } catch (e) { return fail("/admin", e); }
   redirect(`/admin?ok=${encodeURIComponent(message)}`);
 }

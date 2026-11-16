@@ -2,7 +2,7 @@ import { randomInt } from "node:crypto";
 import { sha256 } from "./sessions.ts";
 import { AppError } from "../lib/errors.ts";
 
-/** Every in-game code starts with this, e.g. ABXMCTSP-7K3Q-9XMD-2WPF. Players type /rconfirmT <code>. */
+/** Every in-game code starts with this, e.g. ABXMCTSP-7K3Q-9XMD-2WPF. Players type /rconfirmt <code>. */
 export const LINK_CODE_PREFIX = "ABXMCTSP";
 export const LINK_CODE_LENGTH = 12;
 export const LINK_CODE_TTL_MS = 15 * 60 * 1000;

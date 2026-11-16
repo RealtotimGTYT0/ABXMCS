@@ -12,7 +12,7 @@ export type ConfirmOutcome =
 const INVALID = "That code is invalid or has expired";
 
 /**
- * Handles `/rconfirmT <code>` typed by a player in-game. The plugin forwards the player's
+ * Handles `/rconfirmt <code>` typed by a player in-game. The plugin forwards the player's
  * identity from the server itself (UUID, name, whether the server authenticates players with
  * Mojang), so the website never has to trust anything the browser claims about Minecraft.
  *
