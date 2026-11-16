@@ -145,7 +145,7 @@ describe("leaderboard, history, shop", () => {
 });
 
 describe("account linking via the API", () => {
-  it("confirms /rconfirmT codes and enforces the online-mode rule for Premium", async () => {
+  it("confirms /rconfirmt codes and enforces the online-mode rule for Premium", async () => {
     const input = regInput({ accountType: "PREMIUM" });
     const reg = await registerUser(t.prisma, input, { ip: ip() });
     const mcUuid = randomUUID();

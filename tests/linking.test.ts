@@ -39,7 +39,7 @@ describe("link codes", () => {
   });
 });
 
-describe("account linking via /rconfirmT", () => {
+describe("account linking via /rconfirmt", () => {
   it("links the account, activates the user and keeps tokens earned before registering", async () => {
     const mcUuid = randomUUID();
     const name = uname();
@@ -140,7 +140,7 @@ describe("account linking via /rconfirmT", () => {
   });
 });
 
-describe("password reset via /rconfirmT", () => {
+describe("password reset via /rconfirmt", () => {
   const NEW = "my shiny new passphrase";
 
   it("requires confirmation in-game by the account's own Minecraft UUID", async () => {
